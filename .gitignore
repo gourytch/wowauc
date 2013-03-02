@@ -1,4 +1,7 @@
 *~
 *.tmp
 *.swp
+*.pyc
+*.pyd
+*.pyo
 var/*
