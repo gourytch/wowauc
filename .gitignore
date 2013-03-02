@@ -4,4 +4,5 @@
 *.pyc
 *.pyd
 *.pyo
+wowauc.conf
 var/*
