@@ -158,6 +158,61 @@ END;
 $$;
 
 
+CREATE FUNCTION auc.check_realm (
+    _region  TEXT,
+    _name    TEXT,
+    _slug    TEXT,
+    _locale  TEXT)
+RETURNS INTEGER
+STRICT VOLATILE LANGUAGE plpgsql AS $$
+
+DECLARE
+
+    _realm_id   INTEGER;
+
+BEGIN
+
+    SELECT id INTO _realm_id FROM auc.realms
+        WHERE region = _region AND name = _name;
+
+    IF NOT FOUND THEN
+
+        _realm_id := auc.add_realm(_region, _name, _slug, _locale);
+
+    END IF;
+
+    RETURN _realm_id;
+
+END;
+$$;
+
+
+CREATE FUNCTION auc.get_house_id (
+    _region  TEXT,
+    _name    TEXT,
+    _house   CHARACTER(1))
+RETURNS INTEGER
+STRICT VOLATILE LANGUAGE plpgsql AS $$
+
+DECLARE
+
+    _house_id   INTEGER;
+
+BEGIN
+
+    SELECT H.id INTO _house_id 
+        FROM auc.houses H, auc.realms R
+        WHERE H.realm_id = R.id
+        AND R.region = _region
+        AND R.name = _name
+        AND H.fraction = _house;
+
+    RETURN _house_id;
+
+END;
+$$;
+
+
 CREATE FUNCTION auc.push_start (
     _region     TEXT,
     _name       TEXT,
@@ -173,13 +228,9 @@ DECLARE
 
 BEGIN
 
-    SELECT H.id INTO _house_id FROM auc.houses H, auc.realms R
-        WHERE H.realm_id = R.id
-        AND R.region = _region
-        AND R.name = _name
-        AND H.fraction = _house;
+    _house_id := auc.get_house_id(_region, _name, _house);
 
-    IF NOT FOUND THEN
+    IF _house_id IS NULL THEN
         RETURN NULL;
     END IF;
 
@@ -445,14 +496,9 @@ DECLARE
     _max_time   TIMESTAMP;
 BEGIN
 
-    SELECT H.id INTO _house_id 
-        FROM auc.houses H, auc.realms R
-        WHERE H.realm_id = R.id
-        AND R.region = _region
-        AND R.name = _name
-        AND H.fraction = _house;
+    _house_id := auc.get_house_id(_region, _name, _house);
 
-    IF NOT FOUND THEN
+    IF _house_id IS NULL THEN
         RETURN NULL;
     END IF;
 
@@ -461,7 +507,7 @@ BEGIN
         FROM auc.push_results
         WHERE house_id = _house_id;
 
-    IF NOT FOUND THEN
+    IF NOT FOUND OR _max_time IS NULL THEN
         RETURN TRUE;
     END IF;
 
@@ -471,7 +517,7 @@ $$;
 
 -----------------------------------------------------------------------------
 
-SELECT auc.add_realm ('eu', 'Fordragon', 'fordragon', 'ru_RU');
+-- SELECT auc.add_realm ('eu', 'Fordragon', 'fordragon', 'ru_RU');
 
 COMMIT;
 
