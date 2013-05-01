@@ -19,8 +19,12 @@ find $dir_fetched -type f -name '*.json' -exec cat \{\} \; \
 | uniq \
 >$items_ids
 
-diff $items_ids.bak $items_ids \
-| awk '/^> /{print $2;}' \
->$items_ids.new
-
 echo "done. $(cat  $items_ids | wc -w) ids were gathered"
+
+if [ -e $items_ids.bak -a -e$items_ids ]; then
+new_ids="$items_ids.new-$(date +'%Y%m%d_%H%M%S')"
+  diff $items_ids.bak $items_ids \
+  | awk '/^> /{print $2;}' \
+  >$new_ids
+  echo "$(cat $new_ids $ | wc -w) new ids were added"
+fi
