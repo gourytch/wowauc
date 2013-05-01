@@ -26,5 +26,5 @@ new_ids="$items_ids.new-$(date +'%Y%m%d_%H%M%S')"
   diff $items_ids.bak $items_ids \
   | awk '/^> /{print $2;}' \
   >$new_ids
-  echo "$(cat $new_ids $ | wc -w) new ids were added"
+  echo "$(cat $new_ids | wc -w) new ids were added"
 fi
