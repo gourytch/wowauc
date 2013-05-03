@@ -42,7 +42,7 @@ class Parser(object):
 
         rx_realm = re.compile(r'^"realm":(\{.*\}),$')
         rx_start_auc = re.compile(r'^"([^"]+)":\{"auctions":\[$')
-        rx_lot = re.compile(r'^\s*(\{"auc":.*?"\})(|\]\},?|,)$')
+        rx_lot = re.compile(r'^\s*(\{"auc":[^}]+\})(|\]\},?|,)$')
         rx_end = re.compile(r'^\}$')
 
         realm = None
