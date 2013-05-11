@@ -63,6 +63,13 @@ class FS_Base:
         return file(fname, "rt").read()
 
 
+    def remove(self, id, loc):
+        if type(id) not in (int, long): id = int(id)
+        fname = "%s/%06d-%s.json" % (self.basedir, id, loc)
+        os.remove(fname)
+        return
+
+
     def keys(self):
         x = re.compile(r".*/(\d+)-(\w+)\.json$")
         R = []
@@ -91,7 +98,7 @@ class D_Base:
             src = self.fname + S[i + 1]
             if os.path.exists(src):
                 if os.path.exists(dst):
-                    remove(dst)
+                    os.remove(dst)
                 if src == self.fname:
                     shutil.copy2(src, dst)
                 else:
@@ -132,7 +139,14 @@ class D_Base:
         return self.db.get(key, None)
 
 
-    def keys():
+    def remove(self, id, loc):
+        if type(id) not in (int, long): id = int(id)
+        key ="%06d-%s" % (id, loc)
+        del self.db[key]
+        return
+
+
+    def keys(self):
         x = re.compile(r"^(\d{6})-(\w+)$")
         R = []
         for k in self.db.keys():
@@ -160,6 +174,40 @@ def baseUpdate(src, dst):
             n_copied += 1
         n_processed += 1
     print "done. processed: %d, copied: %d" % (n_processed, n_copied)
+    return
+
+
+def checkJSONs(src):
+    n_good = 0
+    n_bad = 0
+    for R in src.keys():
+        id = R['id']
+        loc = R['loc']
+        v = src.get(id, loc)
+        if v.find('"id":%d' % id) == -1:
+            print "%06d-%-6s bad: %s" % (id, loc, v)
+            db.remove(id, loc)
+            n_bad += 1
+        else:
+            n_good += 1
+    print "done. good: %d, bad: %d" % (n_good, n_bad)
+    return
+
+
+def check404(src):
+    n_good = 0
+    n_bad = 0
+    for R in src.keys():
+        id = R['id']
+        loc = R['loc']
+        v = src.get(id, loc)
+        if v.find('ERROR_404' % id) == -1:
+            n_good += 1
+        else:
+            print "%06d-%-6s delete: %s" % (id, loc, v)
+            db.remove(id, loc)
+            n_bad += 1
+    print "done. good: %d, bad: %d" % (n_good, n_bad)
     return
 
 
@@ -210,17 +258,27 @@ def fetch(region, db):
                     showed = True               
                 print "* retrieve url %s" % url
             c.perform()
+            
+            retcode = c.getinfo(pycurl.HTTP_CODE)
+        
             left -= 1
 
             s = buf.getvalue()
             buf.close()
-
-            if not QUIET:
-                print "got data"
-                print s
-                print "--------------------"
             
-            db.put(iid, loc, s)
+            if retcode == 200:
+                if not QUIET:
+                    print "got data"
+                    print s
+                    print "--------------------"                
+                db.put(iid, loc, s)
+            else:
+                print ""
+                print "%06d-%s ERROR: item %d got retcode %d" % (iid, loc, iid, retcode)
+                print "url: %s" % url
+                print ""
+                db.put(iid, loc, '{"id":%d,"name":"ITEM#%06d","description":"ERROR_404"}')
+                
             #file(fname, "wt").write(s)
 #            r = s.replace(':false', ':False').replace(':true', ':True')
 #            V = eval(r)
@@ -231,6 +289,7 @@ def fetch(region, db):
     
 
 if __name__ == '__main__':
+    
     if False:
         print "open old base"
         db_old= FS_Base(SAVEDIR)
@@ -241,7 +300,19 @@ if __name__ == '__main__':
         db_old.close()
         db.close()
         sys.exit(0)
-    
+        
+    if False:
+        print "open base"
+        db = D_Base(DBFILE)
+        print "check for broken entries"
+        checkJSONs(db)
+#        check404(db)
+        print "close base"
+        db.close()
+        print "done"
+        sys.exit(0)
+        
+
     db = D_Base(DBFILE)
     print "fetch new items to new base"
     fetch(items_realms, db)
