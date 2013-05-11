@@ -34,6 +34,20 @@ dir_zipping="var/tmp/zipping"
 dir_zipped="var/zipped"
 
 #
+# settings for wowitems
+#
+items_ids="var/items_ids.txt"
+items_realms="eu"
+items_locales="en_US ru_RU"
+items_fetch_per_session=100
+
+dir_fetched_items="var/items_fetched"
+dir_importing_items="var/items_importing"
+dir_imported_items="var/items_imported"
+dir_zipping_items="var/items_zipping"
+dir_zipped_items="var/items_zipped"
+
+#
 # misc settings
 #
 dir_etc="etc"
