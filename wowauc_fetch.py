@@ -142,13 +142,23 @@ def fetch(region, realm):
         c.setopt(c.WRITEFUNCTION, f.write)
         c.setopt(c.HEADERFUNCTION, f.header)
         c.perform()
+        retcode = c.getinfo(pycurl.HTTP_CODE)
         c.close()
         f.close()
         if not QUIET:
-            print "* rename it to %s" % sname
+            print "* retcode=%d" % retcode
+        if retcode == 200:
+            if not QUIET:
+                print "* good retcode. rename results to %s" % sname
             os.rename(tname, sname)
-            print "* ...moved"
-
+            if not QUIET:
+                print "* ...moved"
+        else:
+            if not QUIET:
+                print "* retrieved data:"
+                print file(tname).read()
+                print "* erase results"
+            os.remove(tname)
     else:
         if not QUIET:
             print "* skip"
