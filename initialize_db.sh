@@ -36,3 +36,6 @@ createdb -h $dbhost -U $dbroot -w -O $dbuser -E UNICODE $dbname
 
 echo "initialize database ..."
 $PG -ef $dir_etc/db_init.sql
+$PG -ef $dir_etc/db_init_items.sql
+$PG -ef $dir_etc/db_init_indexes.sql
+
