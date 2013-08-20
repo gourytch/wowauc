@@ -28,9 +28,7 @@ CREATE UNIQUE INDEX uix_auc_houses ON auc.houses (realm_id, fraction);
 CREATE TABLE auc.lots (
     id          BIGSERIAL PRIMARY KEY,
     t_open      TIMESTAMP NOT NULL,
-    t_deadline  TIMESTAMP NOT NULL,
     t_mod       TIMESTAMP NOT NULL,
-    t_close     TIMESTAMP,
     house_id    INTEGER REFERENCES auc.houses(id),
     wowauc_id   BIGINT NOT NULL,
     item_id     INTEGER NOT NULL,
@@ -39,13 +37,23 @@ CREATE TABLE auc.lots (
     lastbid     BIGINT NOT NULL,
     buyout      BIGINT NOT NULL DEFAULT 0,
     quantity    INTEGER NOT NULL DEFAULT 1,
-    tcode       CHAR(1) NOT NULL, -- V|L|M|S|x
-    finished    BOOLEAN NOT NULL DEFAULT FALSE,
-    success     BOOLEAN
+    rand        INTEGER NOT NULL DEFAULT 0,
+    seed        INTEGER NOT NULL DEFAULT 0,
 );
 
-CREATE UNIQUE INDEX uix_auc_lots ON auc.lots (house_id, wowauc_id);
-CREATE INDEX ix_auc_lots_finished_house ON auc.lots (house_id, finished);
+
+CREATE UNIQUE INDEX uix_auc_wowauc_id ON auc.lots (house_id, wowauc_id);
+
+
+CREATE TABLE auc.open_lots (
+    tcode       CHAR(1) NOT NULL, -- V|L|M|S|x
+    t_deadline  TIMESTAMP NOT NULL,
+) INHERITS (auc.lots);
+
+CREATE TABLE auc.closed_lots (
+    t_close     TIMESTAMP NOT NULL,
+    success     BOOLEAN NOT NULL
+) INHERITS (auc.lots);
 
 
 CREATE TABLE auc.push_sessions (
